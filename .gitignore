@@ -1,4 +1,5 @@
 newVenv
 __pycache__
 requirements2.txt
-resources
+faiss_index
+sample_page_data.json

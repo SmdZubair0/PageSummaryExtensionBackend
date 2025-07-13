@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pathlib import Path
 
 class APISettings(BaseSettings):
     # CORS settings
@@ -8,16 +9,20 @@ class APISettings(BaseSettings):
     allow_headers: list[str] = ["*"]
 
     # Dataloader settings
-    text_splitter_chunk_size: int = 3000
+    text_splitter_chunk_size: int = 1000
     text_splitter_chunk_overlap: int = 100
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
-    vector_store_location: str = "src/resources/faiss_index"
+    vector_store_location: str = str(Path("src/resources/faiss_index").resolve())
 
     # TextSummarization settings
     summary_model: str = "sshleifer/distilbart-cnn-12-6"
     summary_model_task: str = "summarization"
     summary_model_max_len: int = 1024
     summary_model_min_len: int = 512
+
+    # Query settings
+    query_model: str = "sshleifer/tiny-gpt2"
+    
 
     class Config:
         env_file = ".env"
