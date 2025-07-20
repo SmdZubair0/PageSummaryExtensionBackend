@@ -21,7 +21,7 @@ class APISettings(BaseSettings):
     summary_model_min_len: int = 512
 
     # Query settings
-    query_model: str = "sshleifer/tiny-gpt2"
+    query_model: str = "google/flan-t5-base"
     
 
     class Config:

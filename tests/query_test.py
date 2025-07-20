@@ -1,23 +1,22 @@
 from fastapi import APIRouter, HTTPException
 
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
+from langchain_community.llms import HuggingFacePipeline
+from langchain_huggingface import HuggingFaceEmbeddings
 
-from src.utils.helpers import RetrieveFromVectorStore, chunk_text
-from src.core.config import settings
-from src.models.request_models import QueryModel
-from src.models.response_models import QueryResponse
+from extension.src.utils.helpers import RetrieveFromVectorStore
+from extension.src.core.config import settings
+from extension.src.models.request_models import QueryModel
+from extension.src.models.response_models import QueryResponse
 
-from transformers import pipeline, AutoModelForSeq2SeqLM, AutoTokenizer
-
-app = APIRouter()
+from transformers import pipeline, AutoModelForCausalLM, AutoTokenizer
 
 model_id = settings.query_model
 tokenizer = AutoTokenizer.from_pretrained(model_id)
-model = AutoModelForSeq2SeqLM.from_pretrained(model_id)
+model = AutoModelForCausalLM.from_pretrained(model_id)
 
 llm_pipeline = pipeline(
-    "text2text-generation",
+    "text-generation",
     model=model,
     tokenizer=tokenizer,
     max_new_tokens=512,
@@ -36,16 +35,20 @@ system_prompt = SystemMessage(
     content="You are a helpful assistant. Use the context below to answer the question accurately."
 )
 
-@app.post("/", response_model = QueryResponse)
+d = {
+    "query" : "what are the types of testing?",
+    "chat_history" : [],
+    "timestamp" : None
+}
+data = QueryModel(**d)
 def ask_query(data: QueryModel):
     try:
         context_docs = retriever.retrieve_from_Faiss(
             k=5,
             query=data.query
         )
-
-        chunks = chunk_text("\n".join([doc.page_content for doc in context_docs]), 800)
-        context_text = "\n".join(chunks)
+        context_text = "\n\n".join([doc.page_content for doc in context_docs])
+        print(context_text)
 
         messages = [system_prompt]
 
@@ -56,18 +59,9 @@ def ask_query(data: QueryModel):
                 elif msg.role == "assistant":
                     messages.append(AIMessage(content=msg.content))
 
-        messages.append(
-            HumanMessage(f"""
-                You are a precise extraction engine.
-                Extract any sentence(s) from the context *AS IS* that directly help answer the question below. 
-                Return NO_OUTPUT if nothing in the context is relevant.
-                Do NOT paraphrase or summarize.
-                Context:
-                {context_text}
-                Question:
-                {data.query}
-            """)
-        )
+        messages.append(HumanMessage(content=f"Context:\n{context_text}\n\nQuestion:\n{data.query}"))
+
+        print(messages)
 
         response_raw = llm.invoke(messages)
 
@@ -94,3 +88,5 @@ def ask_query(data: QueryModel):
             status_code=500,
             detail=str(e)
         )
+
+ask_query(data)
