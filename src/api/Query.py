@@ -44,17 +44,16 @@ def ask_query(data: QueryModel):
             query=data.query
         )
 
-        chunks = chunk_text("\n".join([doc.page_content for doc in context_docs]), 800)
-        context_text = "\n".join(chunks)
+        context_text = "\n".join([doc.page_content for doc in context_docs])
 
         messages = [system_prompt]
 
         if data.chat_history:
             for msg in data.chat_history:
-                if msg.role == "user":
-                    messages.append(HumanMessage(content=msg.content))
-                elif msg.role == "assistant":
-                    messages.append(AIMessage(content=msg.content))
+                if msg['role'] == "user":
+                    messages.append(HumanMessage(content = msg['content']))
+                elif msg['role'] == "assistant":
+                    messages.append(AIMessage(content = msg['content']))
 
         messages.append(
             HumanMessage(f"""
@@ -82,6 +81,9 @@ def ask_query(data: QueryModel):
             {"role": "user", "content": data.query},
             {"role": "assistant", "content": response_text.strip()}
         ]
+
+        if response_text.strip() == "No_OUTPUT":
+            response_text = "Couldn’t match the query to the content. Could you pass a more appropiate query please..."
 
         return {
             "status": "success",

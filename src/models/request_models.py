@@ -49,7 +49,7 @@ class QueryModel(BaseModel):
             title="Chat History",
             description="List of previous messages in the conversation. Each message must include a 'role' (either 'user' or 'assistant') and the 'content'."
         )
-    ]
+    ] = []
     timestamp: Annotated[
         Optional[str],
         Field(

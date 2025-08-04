@@ -79,5 +79,5 @@ class RetrieveFromVectorStore:
 def chunk_text(text, max_tokens = 1024):
     tokenizer = AutoTokenizer.from_pretrained(settings.summary_model)
     tokens = tokenizer.encode(text, truncation=False)
-    chunks = [tokens[i:i+max_tokens] for i in range(0, len(tokens), max_tokens)]
+    chunks = [tokens[i : i+max_tokens] for i in range(0, len(tokens), max_tokens)]
     return [tokenizer.decode(chunk, skip_special_tokens=True) for chunk in chunks]
