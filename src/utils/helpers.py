@@ -4,7 +4,6 @@ from langchain.retrievers.document_compressors import LLMChainExtractor
 from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
 from langchain_huggingface import HuggingFacePipeline
 from langchain_core.prompts import PromptTemplate
-from langchain.chains import LLMChain
 
 from transformers import pipeline
 from src.core.config import settings
@@ -19,25 +18,25 @@ class RetrieveFromVectorStore:
         self._faiss = None
 
         self.summarizer_pipeline = pipeline(
-            task=settings.summary_model_task,
-            model=settings.summary_model,
-            max_new_tokens=200,
-            do_sample=False
+            task = settings.summary_model_task,
+            model = settings.summary_model,
+            max_new_tokens = settings.summary_model_max_new_tokens,
+            do_sample = False
         )
 
         self.prompt = PromptTemplate.from_template(
             "Extract any part of the context *AS IS* that is relevant to answer the question. "
             "If none of the context is relevant, return NO_OUTPUT.\n\nContext:\n{page_content}"
         )
-        self.summarizer = HuggingFacePipeline(pipeline=self.summarizer_pipeline)
+        self.summarizer = HuggingFacePipeline(pipeline = self.summarizer_pipeline)
         self.llm_chain = self.prompt | self.summarizer
 
-    def _load_index(self, deserialization=True):
+    def _load_index(self, deserialization = True):
         if self._faiss is None:
             self._faiss = FAISS.load_local(
                 self.path,
                 self.embeddings,
-                allow_dangerous_deserialization=deserialization
+                allow_dangerous_deserialization = deserialization
             )
         return self._faiss
 
@@ -49,11 +48,11 @@ class RetrieveFromVectorStore:
             docs = self._load_index(deserialization)
             
             compressor = LLMChainExtractor.from_llm(self.llm_chain)
-            retriever = docs.as_retriever(search_kwargs={"k": k})
+            retriever = docs.as_retriever(search_kwargs = {"k": k})
 
             compression_retriever = ContextualCompressionRetriever(
-                base_retriever=retriever,
-                base_compressor=compressor
+                base_retriever = retriever,
+                base_compressor = compressor
             )
             return compression_retriever.invoke(query)
 
@@ -66,7 +65,7 @@ class RetrieveFromVectorStore:
                                 deserialization: bool = True):
 
         try:
-            docs = FAISS.load_local(self.path, self.embeddings, allow_dangerous_deserialization=deserialization)
+            docs = FAISS.load_local(self.path, self.embeddings, allow_dangerous_deserialization = deserialization)
         except FileNotFoundError:
             raise FileNotFoundError("please provide proper file path for faiss index...")
         except Exception as e:

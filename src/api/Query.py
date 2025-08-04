@@ -18,12 +18,12 @@ model = AutoModelForSeq2SeqLM.from_pretrained(model_id)
 
 llm_pipeline = pipeline(
     "text2text-generation",
-    model=model,
-    tokenizer=tokenizer,
-    max_new_tokens=512,
-    do_sample=True
+    model = model,
+    tokenizer = tokenizer,
+    max_new_tokens = settings.generation_model_max_new_tokens,
+    do_sample = True
 )
-llm = HuggingFacePipeline(pipeline=llm_pipeline)
+llm = HuggingFacePipeline(pipeline = llm_pipeline)
 
 embeddings = HuggingFaceEmbeddings(model_name = settings.embedding_model)
 
@@ -40,8 +40,8 @@ system_prompt = SystemMessage(
 def ask_query(data: QueryModel):
     try:
         context_docs = retriever.retrieve_from_Faiss(
-            k=5,
-            query=data.query
+            k = 5,
+            query = data.query
         )
 
         context_text = "\n".join([doc.page_content for doc in context_docs])
@@ -50,10 +50,10 @@ def ask_query(data: QueryModel):
 
         if data.chat_history:
             for msg in data.chat_history:
-                if msg['role'] == "user":
-                    messages.append(HumanMessage(content = msg['content']))
-                elif msg['role'] == "assistant":
-                    messages.append(AIMessage(content = msg['content']))
+                if msg.role == "user":
+                    messages.append(HumanMessage(content = msg.content))
+                elif msg.role == "assistant":
+                    messages.append(AIMessage(content = msg.content))
 
         messages.append(
             HumanMessage(f"""
@@ -77,13 +77,13 @@ def ask_query(data: QueryModel):
         else:
             response_text = str(response_raw)
 
+        if response_text.strip() == "No_OUTPUT":
+            response_text = "Couldn’t match the query to the content. Could you pass a more appropiate query please..."
+
         updated_history = data.chat_history + [
             {"role": "user", "content": data.query},
             {"role": "assistant", "content": response_text.strip()}
         ]
-
-        if response_text.strip() == "No_OUTPUT":
-            response_text = "Couldn’t match the query to the content. Could you pass a more appropiate query please..."
 
         return {
             "status": "success",

@@ -22,6 +22,10 @@ class APISettings(BaseSettings):
 
     # Query settings
     query_model: str = "google/flan-t5-base"
+    generation_model_max_new_tokens: int = 512
+
+    # Retriver settings
+    summary_model_max_new_tokens: int = 200
     
 
     class Config:
