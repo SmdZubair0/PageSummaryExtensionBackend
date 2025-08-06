@@ -4,10 +4,11 @@ uvicorn==0.34.3
 faiss-cpu==1.11.0
 
 langchain==0.3.26
+langchain-core==0.3.68
 langchain-community==0.3.26
-langchain-core==0.3.66
-langchain-text-splitters==0.3.8
 langchain-groq==0.3.6
+langchain-text-splitters==0.3.8
+
 
 pydantic==2.11.7
 pydantic-settings==2.9.1
