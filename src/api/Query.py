@@ -1,29 +1,22 @@
 from fastapi import APIRouter, HTTPException
 
+from langchain_groq import ChatGroq
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
 
-from src.utils.helpers import RetrieveFromVectorStore, chunk_text
 from src.core.config import settings
 from src.models.request_models import QueryModel
 from src.models.response_models import QueryResponse
-
-from transformers import pipeline, AutoModelForSeq2SeqLM, AutoTokenizer
+from src.utils.helpers import RetrieveFromVectorStore, clean_output
 
 app = APIRouter()
 
-model_id = settings.query_model
-tokenizer = AutoTokenizer.from_pretrained(model_id)
-model = AutoModelForSeq2SeqLM.from_pretrained(model_id)
-
-llm_pipeline = pipeline(
-    "text2text-generation",
-    model = model,
-    tokenizer = tokenizer,
-    max_new_tokens = settings.generation_model_max_new_tokens,
-    do_sample = True
+llm = ChatGroq(
+    api_key = settings.groq_api_key,
+    model = settings.query_model,
+    temperature = 0.7,
+    max_tokens = settings.generation_model_max_new_tokens
 )
-llm = HuggingFacePipeline(pipeline = llm_pipeline)
 
 embeddings = HuggingFaceEmbeddings(model_name = settings.embedding_model)
 
@@ -46,6 +39,15 @@ def ask_query(data: QueryModel):
 
         context_text = "\n".join([doc.page_content for doc in context_docs])
 
+        if not context_docs:
+            return {
+                "status": "success",
+                "result": "No relevant context found for the given query.",
+                "chat_history": data.chat_history
+            }
+        
+        context_text = context_text[:4000]
+
         messages = [system_prompt]
 
         if data.chat_history:
@@ -56,11 +58,10 @@ def ask_query(data: QueryModel):
                     messages.append(AIMessage(content = msg.content))
 
         messages.append(
-            HumanMessage(f"""
+            HumanMessage(content=f"""
                 You are a precise extraction engine.
-                Extract any sentence(s) from the context *AS IS* that directly help answer the question below. 
+                Extract any sentence(s) from the context *AS IS* that is relevant and answer the query given below.
                 Return NO_OUTPUT if nothing in the context is relevant.
-                Do NOT paraphrase or summarize.
                 Context:
                 {context_text}
                 Question:
@@ -70,15 +71,20 @@ def ask_query(data: QueryModel):
 
         response_raw = llm.invoke(messages)
 
-        if isinstance(response_raw, str):
+
+        if isinstance(response_raw, AIMessage):
+            response_text = response_raw.content
+        elif isinstance(response_raw, str):
             response_text = response_raw
         elif isinstance(response_raw, list) and isinstance(response_raw[0], dict) and 'generated_text' in response_raw[0]:
             response_text = response_raw[0]['generated_text']
         else:
             response_text = str(response_raw)
 
-        if response_text.strip() == "No_OUTPUT":
+        if response_text.strip() == "NO_OUTPUT":
             response_text = "Couldn’t match the query to the content. Could you pass a more appropiate query please..."
+        
+        response_text = clean_output(response_text)
 
         updated_history = data.chat_history + [
             {"role": "user", "content": data.query},

@@ -1,14 +1,14 @@
+import re
+
 from pathlib import Path
+
+from langchain_groq import ChatGroq
+from langchain_core.prompts import PromptTemplate
 from langchain_community.vectorstores import FAISS
 from langchain.retrievers.document_compressors import LLMChainExtractor
 from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
-from langchain_huggingface import HuggingFacePipeline
-from langchain_core.prompts import PromptTemplate
 
-from transformers import pipeline
 from src.core.config import settings
-
-from transformers import AutoTokenizer
 
 class RetrieveFromVectorStore:
 
@@ -17,18 +17,16 @@ class RetrieveFromVectorStore:
         self.embeddings = embeddings
         self._faiss = None
 
-        self.summarizer_pipeline = pipeline(
-            task = settings.summary_model_task,
-            model = settings.summary_model,
-            max_new_tokens = settings.summary_model_max_new_tokens,
-            do_sample = False
-        )
-
         self.prompt = PromptTemplate.from_template(
             "Extract any part of the context *AS IS* that is relevant to answer the question. "
             "If none of the context is relevant, return NO_OUTPUT.\n\nContext:\n{page_content}"
         )
-        self.summarizer = HuggingFacePipeline(pipeline = self.summarizer_pipeline)
+        self.summarizer = ChatGroq(
+            api_key = settings.groq_api_key,
+            model = settings.summary_model_retrieval,
+            temperature = 0.7,
+            max_tokens = settings.generation_model_max_new_tokens,
+        )
         self.llm_chain = self.prompt | self.summarizer
 
     def _load_index(self, deserialization = True):
@@ -75,8 +73,30 @@ class RetrieveFromVectorStore:
 
 
 
-def chunk_text(text, max_tokens = 1024):
-    tokenizer = AutoTokenizer.from_pretrained(settings.summary_model)
-    tokens = tokenizer.encode(text, truncation=False)
-    chunks = [tokens[i : i+max_tokens] for i in range(0, len(tokens), max_tokens)]
-    return [tokenizer.decode(chunk, skip_special_tokens=True) for chunk in chunks]
+def chunk_text(text, max_tokens = 1024, approx_chars_per_token = 4):
+    max_chars = max_tokens * approx_chars_per_token
+    chunks = []
+    start = 0
+    text_len = len(text)
+    
+    while start < text_len:
+        end = start + max_chars
+        if end < text_len:
+            space_pos = text.rfind(' ', start, end)
+            if space_pos != -1 and space_pos > start:
+                end = space_pos
+        chunk = text[start:end].strip()
+        chunks.append(chunk)
+        start = end
+    return chunks
+
+def clean_output(response_text : str) -> str:
+    if response_text.strip().startswith("Here are the relevant sentences"):
+        lines = response_text.strip().split("\n")[1:]
+        cleaned_lines = [
+            re.sub(r'^[*•\-]\s*"?([^"]+)"?', r'\1', line).strip()
+            for line in lines if line.strip()
+        ]
+        response_text = "\n".join(cleaned_lines)
+
+    return response_text

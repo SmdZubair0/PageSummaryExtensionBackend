@@ -1,6 +1,7 @@
+from typing import List
 from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import List
+
 from src.models.request_models import ChatMessage
 
 class DataloaderResponse(BaseModel):

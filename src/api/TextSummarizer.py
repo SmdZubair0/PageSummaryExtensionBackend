@@ -1,18 +1,22 @@
 import os
+import asyncio
+
 from fastapi import APIRouter, HTTPException
 
-from transformers import pipeline
+from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
 
+from src.utils.helpers import *
 from src.core.config import settings
 from src.models.response_models import TextSummarizerResponse
-from src.utils.helpers import RetrieveFromVectorStore, chunk_text
 
 app = APIRouter()
 
-summarizer = pipeline(
-    settings.summary_model_task,
-    model = settings.summary_model
+llm = ChatGroq(
+    api_key = settings.groq_api_key,
+    model = settings.summary_model,
+    temperature = 0.7,
+    max_tokens = settings.generation_model_max_new_tokens,
 )
 
 faiss_index = os.path.join(os.getcwd(), settings.vector_store_location)
@@ -20,43 +24,28 @@ embeddings = HuggingFaceEmbeddings(model_name = settings.embedding_model)
 retriever = RetrieveFromVectorStore(faiss_index, embeddings)
 
 @app.get("/", response_model = TextSummarizerResponse)
-def summarize():
+async def summarize():
     try:
         docs = retriever.retrieve_all_from_Faiss()
         
         intermediate_summaries = []
 
         for doc in docs:
-            chunks = chunk_text(doc.page_content)
-            chunk_summaries = []
 
-            for chunk in chunks:
-                result = summarizer(
-                    chunk,
-                    max_length = settings.summary_model_max_len,
-                    min_length = settings.summary_model_min_len,
-                    do_sample=False
-                )
-                chunk_summaries.append(result[0]["summary_text"])
-
-            combined_doc_summary = " ".join(chunk_summaries)
-            intermediate_summaries.append(combined_doc_summary)
+            summary = await llm.ainvoke(doc.page_content)
+            intermediate_summaries.append(summary.content)
 
         combined_summary_text = " ".join(intermediate_summaries)
 
-        final_chunks = chunk_text(combined_summary_text)
+        final_chunks = chunk_text(combined_summary_text, 1000)
         final_summary = []
 
         for chunk in final_chunks:
-            result = result = summarizer(
-                chunk,
-                max_length = settings.summary_model_max_len,
-                min_length = settings.summary_model_min_len,
-                do_sample=False
-            )
-            final_summary.append(result[0]["summary_text"])
+            result = await  llm.ainvoke(chunk)
+            final_summary.append(result.content)
 
         final_output = " ".join(final_summary)
+        final_output = clean_output(final_output)
 
         return {
             "status": "success",

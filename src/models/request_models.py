@@ -1,5 +1,5 @@
-from typing import Optional, List, Literal
 from pydantic import BaseModel, Field
+from typing import Optional, List, Literal
 
 class PageData(BaseModel):
     url : str = Field(

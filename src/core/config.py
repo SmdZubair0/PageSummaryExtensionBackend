@@ -1,7 +1,13 @@
-from pydantic_settings import BaseSettings
 from pathlib import Path
+from dotenv import load_dotenv
+from pydantic_settings import BaseSettings
+
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
 
 class APISettings(BaseSettings):
+    # keys
+    groq_api_key: str
+    
     # CORS settings
     allow_origins: list[str] = ["*"]
     allow_credentials: bool = True
@@ -15,16 +21,18 @@ class APISettings(BaseSettings):
     vector_store_location: str = str(Path("src/resources/faiss_index").resolve())
 
     # TextSummarization settings
-    summary_model: str = "sshleifer/distilbart-cnn-12-6"
+    summary_model: str = "llama3-70b-8192"
     summary_model_task: str = "summarization"
     summary_model_max_len: int = 1024
     summary_model_min_len: int = 512
 
     # Query settings
-    query_model: str = "google/flan-t5-base"
+    query_model: str = "llama3-70b-8192"
     generation_model_max_new_tokens: int = 512
 
     # Retriver settings
+    summary_model_retrieval: str = "llama3-70b-8192"
+    summary_model_task_retrieval: str = "summarization"
     summary_model_max_new_tokens: int = 200
     
 
