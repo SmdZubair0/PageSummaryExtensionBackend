@@ -4,11 +4,11 @@ from src.core.config import settings
 from src.models.request_models import PageData
 from src.utils.StringLoader import StringLoader
 from src.models.response_models import DataloaderResponse
+from src.utils.HuggingFaceEmbeddingModel import HuggingFaceAPIEmbeddings
 
 from fastapi import APIRouter, HTTPException
 
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 logger = logging.getLogger()
@@ -28,7 +28,7 @@ def upload_data(data: PageData):
         )
         chunks = splitter.split_documents(docs)
 
-        embeddings = HuggingFaceEmbeddings(model_name = settings.embedding_model)
+        embeddings = HuggingFaceAPIEmbeddings()
 
         vectorstore = FAISS.from_documents(chunks, embeddings)
 

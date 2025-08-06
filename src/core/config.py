@@ -7,6 +7,7 @@ load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
 class APISettings(BaseSettings):
     # keys
     groq_api_key: str
+    huggingface_api_key: str
     
     # CORS settings
     allow_origins: list[str] = ["*"]
@@ -17,8 +18,11 @@ class APISettings(BaseSettings):
     # Dataloader settings
     text_splitter_chunk_size: int = 1000
     text_splitter_chunk_overlap: int = 100
-    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     vector_store_location: str = str(Path("src/resources/faiss_index").resolve())
+
+    # HuggingFaceEmbeddingModel
+    embedding_model_url: str = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     # TextSummarization settings
     summary_model: str = "llama3-70b-8192"

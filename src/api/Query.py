@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException
 
 from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 from src.core.config import settings
 from src.models.request_models import QueryModel
 from src.models.response_models import QueryResponse
 from src.utils.helpers import RetrieveFromVectorStore, clean_output
+from src.utils.HuggingFaceEmbeddingModel import HuggingFaceAPIEmbeddings
 
 app = APIRouter()
 
@@ -18,7 +18,7 @@ llm = ChatGroq(
     max_tokens = settings.generation_model_max_new_tokens
 )
 
-embeddings = HuggingFaceEmbeddings(model_name = settings.embedding_model)
+embeddings = HuggingFaceAPIEmbeddings()
 
 retriever = RetrieveFromVectorStore(
     settings.vector_store_location,

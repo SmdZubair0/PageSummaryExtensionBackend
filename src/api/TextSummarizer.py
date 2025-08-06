@@ -4,11 +4,11 @@ import asyncio
 from fastapi import APIRouter, HTTPException
 
 from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings
 
 from src.utils.helpers import *
 from src.core.config import settings
 from src.models.response_models import TextSummarizerResponse
+from src.utils.HuggingFaceEmbeddingModel import HuggingFaceAPIEmbeddings
 
 app = APIRouter()
 
@@ -20,7 +20,7 @@ llm = ChatGroq(
 )
 
 faiss_index = os.path.join(os.getcwd(), settings.vector_store_location)
-embeddings = HuggingFaceEmbeddings(model_name = settings.embedding_model)
+embeddings = HuggingFaceAPIEmbeddings()
 retriever = RetrieveFromVectorStore(faiss_index, embeddings)
 
 @app.get("/", response_model = TextSummarizerResponse)
