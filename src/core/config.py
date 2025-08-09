@@ -21,7 +21,7 @@ class APISettings(BaseSettings):
     vector_store_location: str = str(Path("src/resources/faiss_index").resolve())
 
     # HuggingFaceEmbeddingModel
-    embedding_model_url: str = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
+    embedding_model_url: str = "https://api-inference.huggingface.co/models/sentence-transformers/distilbert-base-nli-mean-tokens"
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     # TextSummarization settings

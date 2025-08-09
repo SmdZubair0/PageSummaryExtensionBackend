@@ -1,5 +1,7 @@
 newVenv
+venv
 __pycache__
 requirements2.txt
 faiss_index
 sample_page_data.json
+.env

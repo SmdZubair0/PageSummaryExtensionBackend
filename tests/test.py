@@ -53,3 +53,22 @@
 # final_output = " ".join(final_summary)
 
 # print(final_output)
+
+
+# import sys
+# import os
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# from src.utils.HuggingFaceEmbeddingModel import HuggingFaceAPIEmbeddings
+
+# embeddings = HuggingFaceAPIEmbeddings()
+
+# embeddings._embed("hello")
+
+
+import requests
+
+API_URL = "https://api-inference.huggingface.co/models/sentence-transformers/distilbert-base-nli-mean-tokens"
+headers = {"Authorization": "Bearer "}
+
+resp = requests.post(API_URL, headers=headers, json={"inputs": "Hello world"})
+print(resp.status_code, resp.text)
