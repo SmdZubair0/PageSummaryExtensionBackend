@@ -19,12 +19,14 @@ llm = ChatGroq(
     max_tokens = settings.generation_model_max_new_tokens,
 )
 
-faiss_index = os.path.join(os.getcwd(), settings.vector_store_location)
 embeddings = HuggingFaceAPIEmbeddings()
-retriever = RetrieveFromVectorStore(faiss_index, embeddings)
 
-@app.get("/", response_model = TextSummarizerResponse)
+@app.get("/{session_id}", response_model = TextSummarizerResponse)
 async def summarize():
+
+    storage_location = f"{session_id}_{uuid.uuid4().hex}_{settings.vector_store_location}"
+    retriever = RetrieveFromVectorStore(storage_location, embeddings)
+
     try:
         docs = retriever.retrieve_all_from_Faiss()
         

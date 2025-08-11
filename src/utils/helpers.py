@@ -100,3 +100,11 @@ def clean_output(response_text : str) -> str:
         response_text = "\n".join(cleaned_lines)
 
     return response_text
+
+def delete_after_delay(file_path, delay_seconds=1800):
+    def delayed_delete():
+        time.sleep(delay_seconds)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"Deleted FAISS index: {file_path}")
+    threading.Thread(target=delayed_delete, daemon=True).start()

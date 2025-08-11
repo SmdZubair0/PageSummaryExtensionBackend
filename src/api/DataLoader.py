@@ -3,6 +3,7 @@ import logging
 from src.core.config import settings
 from src.models.request_models import PageData
 from src.utils.StringLoader import StringLoader
+from src.utils.helpers import delete_after_delay
 from src.models.response_models import DataloaderResponse
 from src.utils.HuggingFaceEmbeddingModel import HuggingFaceAPIEmbeddings
 
@@ -15,8 +16,10 @@ logger = logging.getLogger()
 
 app = APIRouter()
 
-@app.post("/", response_model = DataloaderResponse)
+@app.post("/{session_id}", response_model = DataloaderResponse)
 def upload_data(data: PageData):
+
+    storage_location = f"{session_id}_{uuid.uuid4().hex}_{settings.vector_store_location}"
 
     try:
         loader = StringLoader(data.text)
@@ -32,7 +35,9 @@ def upload_data(data: PageData):
 
         vectorstore = FAISS.from_documents(chunks, embeddings)
 
-        vectorstore.save_local(settings.vector_store_location)
+        vectorstore.save_local(storage_location)
+
+        delete_after_delay(storage_location)
 
         return {
             "status": "success",

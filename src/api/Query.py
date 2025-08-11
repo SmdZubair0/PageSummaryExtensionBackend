@@ -20,17 +20,20 @@ llm = ChatGroq(
 
 embeddings = HuggingFaceAPIEmbeddings()
 
-retriever = RetrieveFromVectorStore(
-    settings.vector_store_location,
-    embeddings = embeddings
-)
 
 system_prompt = SystemMessage(
     content="You are a helpful assistant. Use the context below to answer the question accurately."
 )
 
-@app.post("/", response_model = QueryResponse)
+@app.post("/{session_id}", response_model = QueryResponse)
 def ask_query(data: QueryModel):
+
+    storage_location = f"{session_id}_{uuid.uuid4().hex}_{settings.vector_store_location}"
+
+    retriever = RetrieveFromVectorStore(
+        storage_location,
+        embeddings = embeddings
+    )
     try:
         context_docs = retriever.retrieve_from_Faiss(
             k = 5,
@@ -60,7 +63,7 @@ def ask_query(data: QueryModel):
         messages.append(
             HumanMessage(content=f"""
                 You are a precise extraction engine.
-                Extract any sentence(s) from the context *AS IS* that is relevant and answer the query given below.
+                Analyze the context passed below and answer the query given below.
                 Return NO_OUTPUT if nothing in the context is relevant.
                 Context:
                 {context_text}
@@ -81,10 +84,11 @@ def ask_query(data: QueryModel):
         else:
             response_text = str(response_raw)
 
+        response_text = clean_output(response_text)
+
         if response_text.strip() == "NO_OUTPUT":
             response_text = "Couldn’t match the query to the content. Could you pass a more appropiate query please..."
         
-        response_text = clean_output(response_text)
 
         updated_history = data.chat_history + [
             {"role": "user", "content": data.query},
