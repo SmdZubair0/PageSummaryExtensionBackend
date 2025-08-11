@@ -26,9 +26,9 @@ system_prompt = SystemMessage(
 )
 
 @app.post("/{session_id}", response_model = QueryResponse)
-def ask_query(data: QueryModel):
+def ask_query(session_id: str, data: QueryModel):
 
-    storage_location = f"{session_id}_{uuid.uuid4().hex}_{settings.vector_store_location}"
+    storage_location = f"/{session_id}"
 
     retriever = RetrieveFromVectorStore(
         storage_location,

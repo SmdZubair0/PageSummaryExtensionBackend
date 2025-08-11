@@ -22,9 +22,9 @@ llm = ChatGroq(
 embeddings = HuggingFaceAPIEmbeddings()
 
 @app.get("/{session_id}", response_model = TextSummarizerResponse)
-async def summarize():
+async def summarize(session_id: str):
 
-    storage_location = f"{session_id}_{uuid.uuid4().hex}_{settings.vector_store_location}"
+    storage_location = f"/{session_id}"
     retriever = RetrieveFromVectorStore(storage_location, embeddings)
 
     try:
