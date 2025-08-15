@@ -21,34 +21,32 @@ def upload_data(session_id: str, data: PageData):
 
     storage_location = f"{settings.vector_store_location}/{session_id}"
 
-    # try:
-    loader = StringLoader(data.text)
-    docs = loader.load()
+    try:
+        loader = StringLoader(data.text)
+        docs = loader.load()
 
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size = settings.text_splitter_chunk_size,
-        chunk_overlap = settings.text_splitter_chunk_overlap
-    )
-    chunks = splitter.split_documents(docs)
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size = settings.text_splitter_chunk_size,
+            chunk_overlap = settings.text_splitter_chunk_overlap
+        )
+        chunks = splitter.split_documents(docs)
 
-    embeddings = HuggingFaceAPIEmbeddings()
+        embeddings = HuggingFaceAPIEmbeddings()
 
-    vectorstore = FAISS.from_documents(chunks, embeddings)
+        vectorstore = FAISS.from_documents(chunks, embeddings)
 
-    vectorstore.save_local(storage_location)
+        vectorstore.save_local(storage_location)
 
-    delete_after_delay(storage_location)
+        delete_after_delay(storage_location)
 
-    return {
-        "status": "success",
-        "timestamp": data.timestamp,
-        "chunks": len(chunks)
-    }
-    
-    # except Exception as e:
-
-    #     raise HTTPException(
-    #         status_code=500,
-    #         detail=str(e)
-    #     )
-    
+        return {
+            "status": "success",
+            "timestamp": data.timestamp,
+            "chunks": len(chunks)
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )

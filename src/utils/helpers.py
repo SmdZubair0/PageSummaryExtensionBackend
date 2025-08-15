@@ -1,10 +1,14 @@
+import os
 import re
+import time
+import threading
 
 from pathlib import Path
 
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_community.vectorstores import FAISS
+from langchain_core.runnables import RunnablePassthrough
 from langchain.retrievers.document_compressors import LLMChainExtractor
 from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
 
@@ -18,21 +22,32 @@ class RetrieveFromVectorStore:
         self._faiss = None
 
         self.prompt = PromptTemplate.from_template(
-            "Extract any part of the context *AS IS* that is relevant to answer the question. "
-            "If none of the context is relevant, return NO_OUTPUT.\n\nContext:\n{page_content}"
+            "You are given a context and a question.\n"
+            "Return only the most relevant sentences from the context that help answer the question.\n"
+            "If multiple sentences are relevant, return all of them.\n"
+            "If no relevant sentences exist, return 'NO_OUTPUT'.\n\n"
+            "Question: {question}\nContext:\n{context}"
         )
         self.summarizer = ChatGroq(
             api_key = settings.groq_api_key,
             model = settings.summary_model_retrieval,
             temperature = 0.7,
-            max_tokens = settings.generation_model_max_new_tokens,
+            max_tokens = settings.summary_model_max_new_tokens,
         )
-        self.llm_chain = self.prompt | self.summarizer
+        # self.llm_chain = self.prompt | self.summarizer
+        self.llm_chain = (
+            {
+                "question": RunnablePassthrough(),
+                "context": RunnablePassthrough()
+            }
+            | self.prompt
+            | self.summarizer
+        )
 
     def _load_index(self, deserialization = True):
         if self._faiss is None:
             self._faiss = FAISS.load_local(
-                self.path,
+                str(self.path),
                 self.embeddings,
                 allow_dangerous_deserialization = deserialization
             )
@@ -63,7 +78,7 @@ class RetrieveFromVectorStore:
                                 deserialization: bool = True):
 
         try:
-            docs = FAISS.load_local(self.path, self.embeddings, allow_dangerous_deserialization = deserialization)
+            docs = self._load_index(deserialization)
         except FileNotFoundError:
             raise FileNotFoundError("please provide proper file path for faiss index...")
         except Exception as e:
@@ -106,5 +121,4 @@ def delete_after_delay(file_path, delay_seconds=1800):
         time.sleep(delay_seconds)
         if os.path.exists(file_path):
             os.remove(file_path)
-            print(f"Deleted FAISS index: {file_path}")
     threading.Thread(target=delayed_delete, daemon=True).start()

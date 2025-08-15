@@ -24,7 +24,7 @@ embeddings = HuggingFaceAPIEmbeddings()
 @app.get("/{session_id}", response_model = TextSummarizerResponse)
 async def summarize(session_id: str):
 
-    storage_location = f"/{session_id}"
+    storage_location = f"{settings.vector_store_location}/{session_id}"
     retriever = RetrieveFromVectorStore(storage_location, embeddings)
 
     try:

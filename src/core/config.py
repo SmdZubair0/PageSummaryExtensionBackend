@@ -1,8 +1,5 @@
 from pathlib import Path
-from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
-
-load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
 
 class APISettings(BaseSettings):
     # keys
@@ -41,6 +38,6 @@ class APISettings(BaseSettings):
     
 
     class Config:
-        env_file = ".env"
+        env_file = Path(__file__).resolve().parents[2] / ".env"
 
 settings = APISettings()
