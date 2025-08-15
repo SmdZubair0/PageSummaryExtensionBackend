@@ -8,6 +8,13 @@ from src.api.Query import app as query_router
 
 app = FastAPI()
 
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "message": "Backend is running"
+    }
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allow_origins,
