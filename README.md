@@ -18,6 +18,7 @@ This project is a **LangChain-powered FastAPI backend** that supports:
 ---
 
 ## 📂 Project Structure
+```bash
 src/
 ├── api/                    # API routes
 │   ├── __init__.py
@@ -50,6 +51,7 @@ src/
 ├── README.md               # Documentation
 ├── .gitignore
 ├── .env.example            # Example environment variables
+```
 
 ## ⚡ API Endpoints
 
