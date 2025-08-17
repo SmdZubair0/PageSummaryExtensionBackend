@@ -6,7 +6,7 @@ This project is a **LangChain-powered FastAPI backend** that supports:
 - Answering user queries using **retrieval-based QA** with session tracking.
 
 ---
-##### These APIs can be accessed here : https://github.com/SmdZubair0
+##### These APIs can be accessed here : https://pagesummaryextensionbackend.onrender.com/docs
 ---
 
 ## 🚀 Features
