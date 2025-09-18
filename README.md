@@ -4,7 +4,8 @@ This project is a **LangChain-powered FastAPI backend** that supports:
 - Loading and storing webpage data into **FAISS**.
 - Summarizing stored content.
 - Answering user queries using **retrieval-based QA** with session tracking.
-
+---
+##### Chrome Extension Frontend : https://github.com/SmdZubair0/ChromeExtension
 ---
 ##### These APIs can be accessed here : https://pagesummaryextensionbackend.onrender.com/docs
 ---
